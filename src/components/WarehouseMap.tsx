@@ -78,13 +78,28 @@ export default function WarehouseMap({ onSlotClick }: WarehouseMapProps) {
             <div className="p-4 text-center">
                 <p>Склад не инициализирован.</p>
                 <button
+                    disabled={loading}
                     onClick={async () => {
-                        await fetch('/api/init', { method: 'POST' });
-                        loadMap();
+                        try {
+                            setLoading(true);
+                            const res = await fetch('/api/init', { method: 'POST' });
+                            const data = await res.json();
+
+                            if (!res.ok) {
+                                alert(data.error || 'Ошибка инициализации');
+                            } else {
+                                alert(data.message || 'Склад успешно инициализирован!');
+                                await loadMap();
+                            }
+                        } catch (e) {
+                            alert('Ошибка соединения с сервером');
+                        } finally {
+                            setLoading(false);
+                        }
                     }}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
                 >
-                    Инициализировать склад
+                    {loading ? 'Создание ячеек...' : 'Инициализировать склад'}
                 </button>
             </div>
         );
