@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Модель для ячеек склада
+model Slot {
+  id       String    @id // Имя ячейки (A1, B2, и т.д.)
+  type     String    // "storage" или "walkway"
+  products Product[]
+  
+  @@map("slots")
+}
+
+// Модель для продукции
+model Product {
+  id         Int     @id @default(autoincrement())
+  slotId     String  // Связь с ячейкой
+  floor      Int     // 1 или 2 (уровень)
+  orderNum   String  // Номер заказа
+  rolls      Int?    // Количество рулонов
+  meterage   Int?    // Метраж
+  density    String? // Плотность
+  rollWeight Float?  // Вес рулона
+  comment    String? // Комментарий
+  
+  slot       Slot    @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  
+  @@map("products")
+  @@index([slotId])
+  @@index([orderNum])
+}
