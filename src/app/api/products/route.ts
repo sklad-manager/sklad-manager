@@ -137,3 +137,59 @@ export async function DELETE(request: NextRequest) {
         );
     }
 }
+// PATCH: Перемещение продукции
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { action, sourceSlotId, sourceFloor, targetSlotId, targetFloor } = body;
+
+        if (action === 'move') {
+            if (!sourceSlotId || !sourceFloor || !targetSlotId || !targetFloor) {
+                return NextResponse.json({ error: 'Неполные данные для перемещения' }, { status: 400 });
+            }
+
+            // 1. Проверяем, занята ли целевая ячейка
+            const targetBusy = await prisma.product.findFirst({
+                where: {
+                    slotId: targetSlotId.toUpperCase(),
+                    floor: targetFloor,
+                },
+            });
+
+            if (targetBusy) {
+                return NextResponse.json({ error: 'Целевая ячейка занята' }, { status: 400 });
+            }
+
+            // 2. Находим исходный продукт
+            const product = await prisma.product.findFirst({
+                where: {
+                    slotId: sourceSlotId.toUpperCase(),
+                    floor: sourceFloor,
+                },
+            });
+
+            if (!product) {
+                return NextResponse.json({ error: 'Продукт не найден' }, { status: 404 });
+            }
+
+            // 3. Перемещаем (обновляем запись)
+            const updated = await prisma.product.update({
+                where: { id: product.id },
+                data: {
+                    slotId: targetSlotId.toUpperCase(),
+                    floor: targetFloor,
+                },
+            });
+
+            return NextResponse.json({ product: updated });
+        }
+
+        return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });
+    } catch (error) {
+        console.error('Ошибка перемещения:', error);
+        return NextResponse.json(
+            { error: 'Ошибка перемещения продукции' },
+            { status: 500 }
+        );
+    }
+}

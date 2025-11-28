@@ -68,33 +68,54 @@ export default function ControlPanel({ selectedSlot, onUpdate }: ControlPanelPro
         }
 
         try {
-            // Сохраняем оба этажа
-            if (floor1.orderNum) {
+            let dataToSaveFloor1 = { ...floor1 };
+            let dataToSaveFloor2 = { ...floor2 };
+            let saveToFloor1 = true;
+            let saveToFloor2 = true;
+
+            // Гравитация при ручном вводе
+            // Если заполнен 2 этаж, а 1 пустой (и в UI, и мы не сохраняем туда данные)
+            if (floor2.orderNum && !floor1.orderNum) {
+                const shouldLower = confirm(`Вы заполняете 2-й уровень, но 1-й свободен. Опустить данные на 1-й уровень?`);
+                if (shouldLower) {
+                    // Переносим данные с 2 на 1
+                    dataToSaveFloor1 = { ...floor2 };
+                    dataToSaveFloor2 = { orderNum: '', rolls: '', meterage: '', density: '', rollWeight: '', comment: '' }; // Очищаем 2
+
+                    // Обновляем UI состояние тоже, чтобы пользователь видел изменения
+                    setFloor1(dataToSaveFloor1);
+                    setFloor2(dataToSaveFloor2);
+                }
+            }
+
+            // Сохраняем этаж 1
+            if (dataToSaveFloor1.orderNum) {
                 await fetch('/api/products', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         slotId: selectedSlot,
                         floor: 1,
-                        ...floor1,
-                        rolls: floor1.rolls ? parseInt(floor1.rolls) : null,
-                        meterage: floor1.meterage ? parseInt(floor1.meterage) : null,
-                        rollWeight: floor1.rollWeight ? parseFloat(floor1.rollWeight) : null,
+                        ...dataToSaveFloor1,
+                        rolls: dataToSaveFloor1.rolls ? parseInt(dataToSaveFloor1.rolls) : null,
+                        meterage: dataToSaveFloor1.meterage ? parseInt(dataToSaveFloor1.meterage) : null,
+                        rollWeight: dataToSaveFloor1.rollWeight ? parseFloat(dataToSaveFloor1.rollWeight) : null,
                     }),
                 });
             }
 
-            if (floor2.orderNum) {
+            // Сохраняем этаж 2 (если он не был перенесен вниз)
+            if (dataToSaveFloor2.orderNum) {
                 await fetch('/api/products', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         slotId: selectedSlot,
                         floor: 2,
-                        ...floor2,
-                        rolls: floor2.rolls ? parseInt(floor2.rolls) : null,
-                        meterage: floor2.meterage ? parseInt(floor2.meterage) : null,
-                        rollWeight: floor2.rollWeight ? parseFloat(floor2.rollWeight) : null,
+                        ...dataToSaveFloor2,
+                        rolls: dataToSaveFloor2.rolls ? parseInt(dataToSaveFloor2.rolls) : null,
+                        meterage: dataToSaveFloor2.meterage ? parseInt(dataToSaveFloor2.meterage) : null,
+                        rollWeight: dataToSaveFloor2.rollWeight ? parseFloat(dataToSaveFloor2.rollWeight) : null,
                     }),
                 });
             }
@@ -106,23 +127,74 @@ export default function ControlPanel({ selectedSlot, onUpdate }: ControlPanelPro
         }
     };
 
+    const handleDeleteFloor = async (floor: number) => {
+        if (!selectedSlot) return;
+
+        try {
+            // Логика "Гравитации"
+            if (floor === 1 && floor2.orderNum) {
+                const shouldLower = confirm(`Позиция ${floor2.orderNum} находится в воздухе. Опустить её на 1 уровень?`);
+
+                if (shouldLower) {
+                    // 1. Удаляем 1 этаж
+                    await fetch(`/api/products?slotId=${selectedSlot}&floor=1`, { method: 'DELETE' });
+
+                    // 2. Создаем на 1 этаже данные со 2 этажа
+                    await fetch('/api/products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            slotId: selectedSlot,
+                            floor: 1,
+                            ...floor2,
+                            rolls: floor2.rolls ? parseInt(floor2.rolls) : null,
+                            meterage: floor2.meterage ? parseInt(floor2.meterage) : null,
+                            rollWeight: floor2.rollWeight ? parseFloat(floor2.rollWeight) : null,
+                        }),
+                    });
+
+                    // 3. Удаляем 2 этаж
+                    await fetch(`/api/products?slotId=${selectedSlot}&floor=2`, { method: 'DELETE' });
+
+                    setMessage('Товар опущен на 1 уровень');
+                    onUpdate();
+                    loadSlotData(selectedSlot);
+                    return;
+                }
+            }
+
+            // Обычное удаление
+            await fetch(`/api/products?slotId=${selectedSlot}&floor=${floor}`, {
+                method: 'DELETE',
+            });
+
+            setMessage(`Уровень ${floor} очищен`);
+            onUpdate();
+            loadSlotData(selectedSlot);
+        } catch (error) {
+            setMessage('Ошибка удаления');
+        }
+    };
+
     const handleClear = async () => {
         if (!selectedSlot) {
             setMessage('Выберите ячейку на карте');
             return;
         }
 
-        try {
-            await fetch(`/api/products?slotId=${selectedSlot}`, {
-                method: 'DELETE',
-            });
+        if (confirm('Вы уверены, что хотите полностью очистить ячейку?')) {
+            try {
+                await fetch(`/api/products?slotId=${selectedSlot}`, {
+                    method: 'DELETE',
+                });
 
-            setFloor1({ orderNum: '', rolls: '', meterage: '', density: '', rollWeight: '', comment: '' });
-            setFloor2({ orderNum: '', rolls: '', meterage: '', density: '', rollWeight: '', comment: '' });
-            setMessage('Ячейка очищена');
-            onUpdate();
-        } catch (error) {
-            setMessage('Ошибка очистки');
+                setFloor1({ orderNum: '', rolls: '', meterage: '', density: '', rollWeight: '', comment: '' });
+                setFloor2({ orderNum: '', rolls: '', meterage: '', density: '', rollWeight: '', comment: '' });
+                setMessage('Ячейка очищена');
+                onUpdate();
+            } catch (error) {
+                setMessage('Ошибка очистки');
+            }
         }
     };
 
@@ -156,19 +228,30 @@ export default function ControlPanel({ selectedSlot, onUpdate }: ControlPanelPro
     }, [selectedSlot]); // Загружаем только при изменении selectedSlot
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow space-y-6">
-            <h2 className="text-2xl font-bold">Управление складом</h2>
+        <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow space-y-3 sm:space-y-4 md:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold">Управление складом</h2>
 
             {selectedSlot && (
-                <div className="p-3 bg-blue-50 rounded">
+                <div className="p-2 sm:p-3 bg-blue-50 rounded text-sm sm:text-base">
                     <strong>Выбранная ячейка:</strong> {selectedSlot}
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Уровень 1 */}
-                <div className="space-y-3 border-r pr-4">
-                    <h3 className="font-bold">Уровень 1 (Нижний)</h3>
+                <div className="space-y-2 sm:space-y-3 sm:border-r sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold">Уровень 1 (Нижний)</h3>
+                        {floor1.orderNum && (
+                            <button
+                                onClick={() => handleDeleteFloor(1)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                                title="Удалить с 1 уровня"
+                            >
+                                🗑️
+                            </button>
+                        )}
+                    </div>
                     <input
                         type="text"
                         placeholder="№ Заказа"
@@ -215,7 +298,18 @@ export default function ControlPanel({ selectedSlot, onUpdate }: ControlPanelPro
 
                 {/* Уровень 2 */}
                 <div className="space-y-3">
-                    <h3 className="font-bold">Уровень 2 (Верхний)</h3>
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold">Уровень 2 (Верхний)</h3>
+                        {floor2.orderNum && (
+                            <button
+                                onClick={() => handleDeleteFloor(2)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                                title="Удалить со 2 уровня"
+                            >
+                                🗑️
+                            </button>
+                        )}
+                    </div>
                     <input
                         type="text"
                         placeholder="№ Заказа"
@@ -267,12 +361,6 @@ export default function ControlPanel({ selectedSlot, onUpdate }: ControlPanelPro
                     className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
                     Сохранить
-                </button>
-                <button
-                    onClick={handleClear}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                    Очистить ячейку
                 </button>
             </div>
 
