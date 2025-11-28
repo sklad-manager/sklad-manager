@@ -172,9 +172,12 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     // --- Pan-to-Move Handlers ---
     const handleMouseDown = (e: React.MouseEvent) => {
-        // Только правая кнопка мыши (button 2)
-        if (e.button === 2 && containerRef.current) {
-            e.preventDefault(); // Предотвращаем стандартное поведение (хотя contextmenu это отдельное событие)
+        // Только левая кнопка мыши (button 0) и только на walkway
+        const target = e.target as HTMLElement;
+        const isWalkway = target.closest('[data-walkway="true"]');
+
+        if (e.button === 0 && isWalkway && containerRef.current) {
+            e.preventDefault();
             setIsDragging(true);
             setDragStart({
                 x: e.clientX,
@@ -199,12 +202,6 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     const handleMouseUp = () => {
         setIsDragging(false);
-    };
-
-    const handleContextMenu = (e: React.MouseEvent) => {
-        // Предотвращаем появление контекстного меню, если мы перетаскивали
-        // Или вообще всегда в этой зоне, чтобы не мешало
-        e.preventDefault();
     };
 
     const getTitle = (slot: SlotData) => {
@@ -333,12 +330,11 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                     {/* Контейнер с горизонтальной прокруткой */}
                     <div
                         ref={containerRef}
-                        className={`overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+                        className={`overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded ${isDragging ? 'select-none' : ''}`}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
-                        onContextMenu={handleContextMenu}
                     >
                         <div
                             className="inline-block min-w-full px-2 sm:px-0 origin-top-left transition-transform duration-200 ease-out"
@@ -393,8 +389,6 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                 return (
                                                     <td
                                                         key={slot.id}
-                                                        // Обработчик клика на ячейку в целом (для совместимости, но основные клики внутри)
-                                                        // onClick={() => isStorage && onSlotClick(slot.id)} 
                                                         title={getTitle(slot)}
                                                         className={`relative border ${selectedSlot === slot.id
                                                                 ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
@@ -443,7 +437,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 </div>
                                                             </>
                                                         ) : (
-                                                            <div className="flex items-center justify-center h-full text-[10px] text-gray-300">
+                                                            <div
+                                                                className="flex items-center justify-center h-full text-[10px] text-gray-300 cursor-move"
+                                                                data-walkway="true"
+                                                            >
                                                                 {/* Walkway */}
                                                             </div>
                                                         )}
