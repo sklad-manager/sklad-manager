@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET: Получить карту склада со статусами
+export const dynamic = 'force-dynamic';
 export async function GET() {
     try {
         const slots = await prisma.slot.findMany({

@@ -43,7 +43,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     const loadMap = async () => {
         try {
-            const res = await fetch('/api/map');
+            const res = await fetch('/api/map', { cache: 'no-store' });
             const data = await res.json();
             setMap(data.map || []);
         } catch (error) {
@@ -219,8 +219,8 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                         onClick={() => isStorage && onSlotClick(slot.id)}
                                                         title={getTitle(slot)}
                                                         className={`relative border ${selectedSlot === slot.id
-                                                                ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
-                                                                : 'border-gray-400'
+                                                            ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
+                                                            : 'border-gray-400'
                                                             } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'cursor-pointer hover:brightness-90 active:brightness-95' : 'bg-gray-100'
                                                             }`}
                                                         style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
