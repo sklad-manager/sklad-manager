@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface SlotData {
     id: string;
@@ -39,6 +39,11 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
     const [isMoveMode, setIsMoveMode] = useState(false);
     const [moveSource, setMoveSource] = useState<{ slotId: string, floor: number } | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
+
+    // Состояния для Pan-to-Move
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 
     useEffect(() => {
         loadMap();
@@ -165,6 +170,43 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
         }
     };
 
+    // --- Pan-to-Move Handlers ---
+    const handleMouseDown = (e: React.MouseEvent) => {
+        // Только правая кнопка мыши (button 2)
+        if (e.button === 2 && containerRef.current) {
+            e.preventDefault(); // Предотвращаем стандартное поведение (хотя contextmenu это отдельное событие)
+            setIsDragging(true);
+            setDragStart({
+                x: e.clientX,
+                y: e.clientY,
+                scrollLeft: containerRef.current.scrollLeft,
+                scrollTop: containerRef.current.scrollTop
+            });
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isDragging && containerRef.current) {
+            e.preventDefault();
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+
+            // Инвертируем движение: тянем влево -> скролл вправо
+            containerRef.current.scrollLeft = dragStart.scrollLeft - dx;
+            containerRef.current.scrollTop = dragStart.scrollTop - dy;
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        // Предотвращаем появление контекстного меню, если мы перетаскивали
+        // Или вообще всегда в этой зоне, чтобы не мешало
+        e.preventDefault();
+    };
+
     const getTitle = (slot: SlotData) => {
         const lines = [];
         if (slot.floor1Busy && slot.floor1Data) {
@@ -289,7 +331,15 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                     )}
 
                     {/* Контейнер с горизонтальной прокруткой */}
-                    <div className="overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded">
+                    <div
+                        ref={containerRef}
+                        className={`overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onContextMenu={handleContextMenu}
+                    >
                         <div
                             className="inline-block min-w-full px-2 sm:px-0 origin-top-left transition-transform duration-200 ease-out"
                             style={{
