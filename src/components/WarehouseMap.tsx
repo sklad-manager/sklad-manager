@@ -38,6 +38,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
     const [loading, setLoading] = useState(true);
     const [isMoveMode, setIsMoveMode] = useState(false);
     const [moveSource, setMoveSource] = useState<{ slotId: string, floor: number } | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     useEffect(() => {
         loadMap();
@@ -206,8 +207,29 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     return (
         <div className="relative bg-white p-2 sm:p-4 rounded-lg shadow min-h-[400px] sm:min-h-[500px]">
-            {/* Кнопка переключения режима */}
-            <div className="absolute top-2 right-2 z-20 flex gap-2">
+            {/* Кнопки управления */}
+            <div className="absolute top-2 right-2 z-20 flex gap-2 items-center">
+                {/* Зум контролы */}
+                <div className="flex bg-white rounded shadow border border-gray-300 overflow-hidden mr-2">
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
+                        className="px-2 py-1 hover:bg-gray-100 text-gray-600 border-r border-gray-300"
+                        title="Уменьшить"
+                    >
+                        -
+                    </button>
+                    <span className="px-2 py-1 text-xs flex items-center text-gray-500 min-w-[3rem] justify-center">
+                        {Math.round(zoomLevel * 100)}%
+                    </span>
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+                        className="px-2 py-1 hover:bg-gray-100 text-gray-600"
+                        title="Увеличить"
+                    >
+                        +
+                    </button>
+                </div>
+
                 <button
                     onClick={() => {
                         setIsMoveMode(!isMoveMode);
@@ -267,9 +289,15 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                     )}
 
                     {/* Контейнер с горизонтальной прокруткой */}
-                    <div className="overflow-x-auto -mx-2 sm:mx-0 touch-pan-x">
-                        <div className="inline-block min-w-full px-2 sm:px-0">
-                            <table className="border-collapse">
+                    <div className="overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded">
+                        <div
+                            className="inline-block min-w-full px-2 sm:px-0 origin-top-left transition-transform duration-200 ease-out"
+                            style={{
+                                transform: `scale(${zoomLevel})`,
+                                width: `${100 / zoomLevel}%` // Компенсация ширины при зуме
+                            }}
+                        >
+                            <table className="border-collapse w-full">
                                 <thead>
                                     <tr>
                                         {/* Адаптивные размеры: mobile 32px, tablet 40px, desktop 48px */}
