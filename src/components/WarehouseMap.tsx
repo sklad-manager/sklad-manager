@@ -176,9 +176,13 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
                                                     if (sourceSlotId === slot.id && sourceFloor === targetFloor) return;
 
+                                                    // Находим исходную ячейку для проверки гравитации
+                                                    const sourceSlotData = map.find(s => s.id === sourceSlotId);
+                                                    const shouldCheckSourceGravity = sourceSlotData && sourceFloor === 1 && sourceSlotData.floor2Busy;
+
                                                     let finalTargetFloor = targetFloor;
 
-                                                    // Гравитация: Если кладем на 2 этаж, а 1 пустой
+                                                    // Гравитация целевой ячейки: Если кладем на 2 этаж, а 1 пустой
                                                     if (targetFloor === 2 && !slot.floor1Busy) {
                                                         const shouldLower = confirm(`1-й уровень свободен. Опустить товар вниз?`);
                                                         if (shouldLower) {
@@ -188,6 +192,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
                                                     try {
                                                         setLoading(true);
+                                                        // 1. Основное перемещение
                                                         const res = await fetch('/api/products', {
                                                             method: 'PATCH',
                                                             headers: { 'Content-Type': 'application/json' },
@@ -204,6 +209,30 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                         if (!res.ok) {
                                                             alert(result.error || 'Ошибка перемещения');
                                                         } else {
+                                                            // Если успешно переместили, проверяем исходную ячейку
+                                                            if (shouldCheckSourceGravity) {
+                                                                // Сначала обновляем карту, чтобы пользователь увидел, что 1-й этаж освободился
+                                                                await loadMap();
+
+                                                                // Спрашиваем про спуск товара
+                                                                const shouldLowerSource = confirm(`В исходной ячейке ${sourceSlotId} на 2-м уровне остался товар. Опустить его вниз?`);
+
+                                                                if (shouldLowerSource) {
+                                                                    setLoading(true);
+                                                                    await fetch('/api/products', {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({
+                                                                            action: 'move',
+                                                                            sourceSlotId: sourceSlotId,
+                                                                            sourceFloor: 2,
+                                                                            targetSlotId: sourceSlotId,
+                                                                            targetFloor: 1
+                                                                        }),
+                                                                    });
+                                                                }
+                                                            }
+
                                                             await loadMap();
                                                         }
                                                     } catch (error) {
