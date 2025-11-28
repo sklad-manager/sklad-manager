@@ -36,6 +36,8 @@ const RollIcon = ({ className = "" }: { className?: string }) => (
 export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMapProps) {
     const [map, setMap] = useState<SlotData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isMoveMode, setIsMoveMode] = useState(false);
+    const [moveSource, setMoveSource] = useState<{ slotId: string, floor: number } | null>(null);
 
     useEffect(() => {
         loadMap();
@@ -50,6 +52,115 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
             console.error('Ошибка загрузки карты:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleMove = async (sourceSlotId: string, sourceFloor: number, targetSlotId: string, targetFloor: number) => {
+        if (sourceSlotId === targetSlotId && sourceFloor === targetFloor) return;
+
+        // Находим исходную ячейку для проверки гравитации
+        const sourceSlotData = map.find(s => s.id === sourceSlotId);
+        const shouldCheckSourceGravity = sourceSlotData && sourceFloor === 1 && sourceSlotData.floor2Busy;
+
+        // Находим целевую ячейку
+        const targetSlotData = map.find(s => s.id === targetSlotId);
+        // Проверка занятости целевой ячейки
+        const isTargetBusy = targetFloor === 1 ? targetSlotData?.floor1Busy : targetSlotData?.floor2Busy;
+
+        if (isTargetBusy) {
+            alert('Целевая ячейка занята!');
+            setMoveSource(null);
+            return;
+        }
+
+        let finalTargetFloor = targetFloor;
+
+        // Гравитация целевой ячейки: Если кладем на 2 этаж, а 1 пустой
+        if (targetFloor === 2 && targetSlotData && !targetSlotData.floor1Busy) {
+            const shouldLower = confirm(`1-й уровень свободен. Опустить товар вниз?`);
+            if (shouldLower) {
+                finalTargetFloor = 1;
+            }
+        }
+
+        try {
+            setLoading(true);
+            // 1. Основное перемещение
+            const res = await fetch('/api/products', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'move',
+                    sourceSlotId,
+                    sourceFloor,
+                    targetSlotId,
+                    targetFloor: finalTargetFloor
+                }),
+            });
+
+            const result = await res.json();
+            if (!res.ok) {
+                alert(result.error || 'Ошибка перемещения');
+            } else {
+                // Если успешно переместили, проверяем исходную ячейку
+                if (shouldCheckSourceGravity) {
+                    await loadMap();
+                    const shouldLowerSource = confirm(`В исходной ячейке ${sourceSlotId} на 2-м уровне остался товар. Опустить его вниз?`);
+
+                    if (shouldLowerSource) {
+                        setLoading(true);
+                        await fetch('/api/products', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'move',
+                                sourceSlotId: sourceSlotId,
+                                sourceFloor: 2,
+                                targetSlotId: sourceSlotId,
+                                targetFloor: 1
+                            }),
+                        });
+                    }
+                }
+
+                await loadMap();
+            }
+        } catch (error) {
+            alert('Ошибка соединения');
+        } finally {
+            setLoading(false);
+            setMoveSource(null); // Сброс выбора после перемещения
+        }
+    };
+
+    const handleSlotInteraction = (slot: SlotData, floor: number) => {
+        if (!isMoveMode) {
+            // Обычный режим: просто выбираем ячейку для просмотра
+            // Но клик по этажу тоже должен выбирать ячейку
+            onSlotClick(slot.id);
+            return;
+        }
+
+        // Режим перемещения
+        if (!moveSource) {
+            // Выбор источника
+            const isBusy = floor === 1 ? slot.floor1Busy : slot.floor2Busy;
+            if (isBusy) {
+                setMoveSource({ slotId: slot.id, floor });
+            } else {
+                // Если кликнули в пустоту в режиме перемещения - можно просто выбрать ячейку
+                onSlotClick(slot.id);
+            }
+        } else {
+            // Выбор цели
+            // Если кликнули туда же - отмена
+            if (moveSource.slotId === slot.id && moveSource.floor === floor) {
+                setMoveSource(null);
+                return;
+            }
+
+            // Выполняем перемещение
+            handleMove(moveSource.slotId, moveSource.floor, slot.id, floor);
         }
     };
 
@@ -95,6 +206,22 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     return (
         <div className="relative bg-white p-2 sm:p-4 rounded-lg shadow min-h-[400px] sm:min-h-[500px]">
+            {/* Кнопка переключения режима */}
+            <div className="absolute top-2 right-2 z-20 flex gap-2">
+                <button
+                    onClick={() => {
+                        setIsMoveMode(!isMoveMode);
+                        setMoveSource(null);
+                    }}
+                    className={`px-3 py-1 rounded text-xs sm:text-sm font-bold shadow transition-colors ${isMoveMode
+                            ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                        }`}
+                >
+                    {isMoveMode ? '🖐️ Перемещение' : '👆 Просмотр'}
+                </button>
+            </div>
+
             {loading && (
                 <div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center backdrop-blur-[1px]">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -130,6 +257,15 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                 </div>
             ) : (
                 <>
+                    {/* Инструкция для режима перемещения */}
+                    {isMoveMode && (
+                        <div className="mb-2 p-2 bg-blue-50 text-blue-800 text-xs sm:text-sm rounded border border-blue-100">
+                            {moveSource
+                                ? `Выбрано: ${moveSource.slotId} (эт. ${moveSource.floor}). Нажмите на другую ячейку для перемещения.`
+                                : 'Нажмите на товар, чтобы выбрать его для перемещения.'}
+                        </div>
+                    )}
+
                     {/* Контейнер с горизонтальной прокруткой */}
                     <div className="overflow-x-auto -mx-2 sm:mx-0 touch-pan-x">
                         <div className="inline-block min-w-full px-2 sm:px-0">
@@ -173,114 +309,56 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                     if (!data) return;
 
                                                     const { slotId: sourceSlotId, floor: sourceFloor } = JSON.parse(data);
-
-                                                    if (sourceSlotId === slot.id && sourceFloor === targetFloor) return;
-
-                                                    // Находим исходную ячейку для проверки гравитации
-                                                    const sourceSlotData = map.find(s => s.id === sourceSlotId);
-                                                    const shouldCheckSourceGravity = sourceSlotData && sourceFloor === 1 && sourceSlotData.floor2Busy;
-
-                                                    let finalTargetFloor = targetFloor;
-
-                                                    // Гравитация целевой ячейки: Если кладем на 2 этаж, а 1 пустой
-                                                    if (targetFloor === 2 && !slot.floor1Busy) {
-                                                        const shouldLower = confirm(`1-й уровень свободен. Опустить товар вниз?`);
-                                                        if (shouldLower) {
-                                                            finalTargetFloor = 1;
-                                                        }
-                                                    }
-
-                                                    try {
-                                                        setLoading(true);
-                                                        // 1. Основное перемещение
-                                                        const res = await fetch('/api/products', {
-                                                            method: 'PATCH',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({
-                                                                action: 'move',
-                                                                sourceSlotId,
-                                                                sourceFloor,
-                                                                targetSlotId: slot.id,
-                                                                targetFloor: finalTargetFloor
-                                                            }),
-                                                        });
-
-                                                        const result = await res.json();
-                                                        if (!res.ok) {
-                                                            alert(result.error || 'Ошибка перемещения');
-                                                        } else {
-                                                            // Если успешно переместили, проверяем исходную ячейку
-                                                            if (shouldCheckSourceGravity) {
-                                                                // Сначала обновляем карту, чтобы пользователь увидел, что 1-й этаж освободился
-                                                                await loadMap();
-
-                                                                // Спрашиваем про спуск товара
-                                                                const shouldLowerSource = confirm(`В исходной ячейке ${sourceSlotId} на 2-м уровне остался товар. Опустить его вниз?`);
-
-                                                                if (shouldLowerSource) {
-                                                                    setLoading(true);
-                                                                    await fetch('/api/products', {
-                                                                        method: 'PATCH',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({
-                                                                            action: 'move',
-                                                                            sourceSlotId: sourceSlotId,
-                                                                            sourceFloor: 2,
-                                                                            targetSlotId: sourceSlotId,
-                                                                            targetFloor: 1
-                                                                        }),
-                                                                    });
-                                                                }
-                                                            }
-
-                                                            await loadMap();
-                                                        }
-                                                    } catch (error) {
-                                                        alert('Ошибка соединения');
-                                                    } finally {
-                                                        setLoading(false);
-                                                    }
+                                                    handleMove(sourceSlotId, sourceFloor, slot.id, targetFloor);
                                                 };
 
                                                 return (
                                                     <td
                                                         key={slot.id}
-                                                        onClick={() => isStorage && onSlotClick(slot.id)}
+                                                        // Обработчик клика на ячейку в целом (для совместимости, но основные клики внутри)
+                                                        // onClick={() => isStorage && onSlotClick(slot.id)} 
                                                         title={getTitle(slot)}
                                                         className={`relative border ${selectedSlot === slot.id
-                                                            ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
-                                                            : 'border-gray-400'
-                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'cursor-pointer hover:brightness-90 active:brightness-95' : 'bg-gray-100'
+                                                                ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
+                                                                : 'border-gray-400'
+                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'bg-white' : 'bg-gray-100'
                                                             }`}
                                                         style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
                                                     >
                                                         {isStorage ? (
                                                             <>
                                                                 {/* Номер ячейки (всегда виден) */}
-                                                                <span className="absolute top-0 left-0.5 text-[6px] sm:text-[7px] md:text-[8px] font-bold text-gray-500 select-none z-10 pointer-events-none">
+                                                                <span
+                                                                    onClick={() => onSlotClick(slot.id)}
+                                                                    className="absolute top-0 left-0.5 text-[6px] sm:text-[7px] md:text-[8px] font-bold text-gray-500 select-none z-10 cursor-pointer"
+                                                                >
                                                                     {slot.id}
                                                                 </span>
 
                                                                 <div className="flex flex-col h-full w-full pt-1">
                                                                     {/* Уровень 2 (Верх) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50'
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
-                                                                        draggable={slot.floor2Busy}
-                                                                        onDragStart={(e) => slot.floor2Busy && handleDragStart(e, 2)}
-                                                                        onDragOver={!slot.floor2Busy ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor2Busy ? (e) => handleDrop(e, 2) : undefined}
+                                                                        draggable={slot.floor2Busy && !isMoveMode}
+                                                                        onDragStart={(e) => slot.floor2Busy && !isMoveMode && handleDragStart(e, 2)}
+                                                                        onDragOver={!slot.floor2Busy && !isMoveMode ? handleDragOver : undefined}
+                                                                        onDrop={!slot.floor2Busy && !isMoveMode ? (e) => handleDrop(e, 2) : undefined}
+                                                                        onClick={() => handleSlotInteraction(slot, 2)}
                                                                     >
                                                                         {slot.floor2Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
                                                                     </div>
                                                                     {/* Уровень 1 (Низ) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50'
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
-                                                                        draggable={slot.floor1Busy}
-                                                                        onDragStart={(e) => slot.floor1Busy && handleDragStart(e, 1)}
-                                                                        onDragOver={!slot.floor1Busy ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor1Busy ? (e) => handleDrop(e, 1) : undefined}
+                                                                        draggable={slot.floor1Busy && !isMoveMode}
+                                                                        onDragStart={(e) => slot.floor1Busy && !isMoveMode && handleDragStart(e, 1)}
+                                                                        onDragOver={!slot.floor1Busy && !isMoveMode ? handleDragOver : undefined}
+                                                                        onDrop={!slot.floor1Busy && !isMoveMode ? (e) => handleDrop(e, 1) : undefined}
+                                                                        onClick={() => handleSlotInteraction(slot, 1)}
                                                                     >
                                                                         {slot.floor1Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
                                                                     </div>
