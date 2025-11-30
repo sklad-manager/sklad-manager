@@ -394,7 +394,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 {/* Номер ячейки (всегда виден) */}
                                                                 <span
                                                                     onClick={() => onSlotClick(slot.id)}
-                                                                    className="absolute top-0 left-0.5 text-[7px] sm:text-[8px] md:text-[9px] font-bold text-gray-600 select-none z-10 cursor-pointer"
+                                                                    className="absolute top-0 left-0.5 text-[9px] sm:text-[10px] md:text-[11px] font-bold text-gray-700 select-none z-10 cursor-pointer"
                                                                 >
                                                                     {slot.id}
                                                                 </span>
@@ -411,7 +411,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                         onDrop={!slot.floor2Busy ? (e) => handleDrop(e, 2) : undefined}
                                                                         onClick={() => handleSlotInteraction(slot, 2)}
                                                                     >
-                                                                        {slot.floor2Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />}
+                                                                        {slot.floor2Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
                                                                     </div>
                                                                     {/* Уровень 1 (Низ) */}
                                                                     <div
@@ -424,7 +424,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                         onDrop={!slot.floor1Busy ? (e) => handleDrop(e, 1) : undefined}
                                                                         onClick={() => handleSlotInteraction(slot, 1)}
                                                                     >
-                                                                        {slot.floor1Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />}
+                                                                        {slot.floor1Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
                                                                     </div>
                                                                 </div>
                                                             </>
