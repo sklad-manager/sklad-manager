@@ -400,9 +400,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 <div className="flex flex-col h-full w-full pt-1">
                                                                     {/* Уровень 2 (Верх) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'bg-gray-100 cursor-pointer' : 'bg-green-50 cursor-pointer')
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'cursor-pointer' : 'bg-green-50 cursor-pointer')
                                                                             } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
+                                                                        style={isGrayColumn && !slot.floor2Busy ? { backgroundColor: '#eeeeee' } : undefined}
                                                                         draggable={slot.floor2Busy}
                                                                         onDragStart={(e) => slot.floor2Busy && handleDragStart(e, 2)}
                                                                         onDragOver={!slot.floor2Busy ? handleDragOver : undefined}
@@ -413,9 +414,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                     </div>
                                                                     {/* Уровень 1 (Низ) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'bg-gray-100 cursor-pointer' : 'bg-green-50 cursor-pointer')
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'cursor-pointer' : 'bg-green-50 cursor-pointer')
                                                                             } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
+                                                                        style={isGrayColumn && !slot.floor1Busy ? { backgroundColor: '#eeeeee' } : undefined}
                                                                         draggable={slot.floor1Busy}
                                                                         onDragStart={(e) => slot.floor1Busy && handleDragStart(e, 1)}
                                                                         onDragOver={!slot.floor1Busy ? handleDragOver : undefined}
