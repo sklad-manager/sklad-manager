@@ -317,133 +317,128 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
+                        style={{
+                            zoom: zoomLevel
+                        }}
                     >
-                        <div
-                            className="inline-block origin-top-left transition-transform duration-200 ease-out"
-                            style={{
-                                transform: `scale(${zoomLevel})`,
-                                width: `${100 / zoomLevel}%`
-                            }}
-                        >
-                            <table className="border-collapse table-fixed w-full">
-                                <thead>
-                                    <tr>
-                                        {/* Угловая ячейка */}
-                                        <th className="sticky top-0 left-0 z-30 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem]"></th>
-                                        {/* Заголовки колонок */}
-                                        {columns.map(col => (
-                                            <th
-                                                key={col}
-                                                className="sticky top-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] text-[10px] sm:text-xs font-bold text-center align-middle"
-                                            >
-                                                {col}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map((rowSlots, rowIndex) => (
-                                        <tr key={rowIndex}>
-                                            {/* Заголовок строки (номер) */}
-                                            <th
-                                                className="sticky left-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs font-bold text-center align-middle"
-                                            >
-                                                {rowIndex + 1}
-                                            </th>
-                                            {/* Ячейки */}
-                                            {rowSlots.map(slot => {
-                                                // Принудительно считаем Y и Z проходами (не складом)
-                                                const isGrayColumn = slot.id.startsWith('Y') || slot.id.startsWith('Z');
-                                                const isStorage = slot.type === 'storage' && !isGrayColumn;
-
-                                                const handleDragStart = (e: React.DragEvent, floor: number) => {
-                                                    e.dataTransfer.setData('application/json', JSON.stringify({
-                                                        slotId: slot.id,
-                                                        floor: floor
-                                                    }));
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                };
-
-                                                const handleDragOver = (e: React.DragEvent) => {
-                                                    e.preventDefault();
-                                                    e.dataTransfer.dropEffect = 'move';
-                                                };
-
-                                                const handleDrop = async (e: React.DragEvent, targetFloor: number) => {
-                                                    e.preventDefault();
-                                                    const data = e.dataTransfer.getData('application/json');
-                                                    if (!data) return;
-
-                                                    const { slotId: sourceSlotId, floor: sourceFloor } = JSON.parse(data);
-                                                    handleMove(sourceSlotId, sourceFloor, slot.id, targetFloor);
-                                                };
-
-                                                return (
-                                                    <td
-                                                        key={slot.id}
-                                                        title={getTitle(slot)}
-                                                        className={`relative border ${selectedSlot === slot.id
-                                                            ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-10'
-                                                            : 'border-gray-400'
-                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] p-0 align-top transition-all overflow-hidden ${isStorage ? 'bg-white' : 'bg-gray-200'
-                                                            }`}
-                                                        style={{ backgroundColor: isStorage ? '#fff' : '#e5e7eb' }}
-                                                    >
-                                                        {isStorage ? (
-                                                            <>
-                                                                {/* Номер ячейки (всегда виден) */}
-                                                                <span
-                                                                    onClick={() => onSlotClick(slot.id)}
-                                                                    className="absolute top-0 left-0.5 text-[9px] sm:text-[10px] md:text-[11px] font-bold text-gray-700 select-none z-10 cursor-pointer"
-                                                                >
-                                                                    {slot.id}
-                                                                </span>
-
-                                                                <div className="flex flex-col h-full w-full pt-1">
-                                                                    {/* Уровень 2 (Верх) */}
-                                                                    <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
-                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
-                                                                            }`}
-                                                                        draggable={slot.floor2Busy}
-                                                                        onDragStart={(e) => slot.floor2Busy && handleDragStart(e, 2)}
-                                                                        onDragOver={!slot.floor2Busy ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor2Busy ? (e) => handleDrop(e, 2) : undefined}
-                                                                        onClick={() => handleSlotInteraction(slot, 2)}
-                                                                    >
-                                                                        {slot.floor2Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
-                                                                    </div>
-                                                                    {/* Уровень 1 (Низ) */}
-                                                                    <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-blue-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
-                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
-                                                                            }`}
-                                                                        draggable={slot.floor1Busy}
-                                                                        onDragStart={(e) => slot.floor1Busy && handleDragStart(e, 1)}
-                                                                        onDragOver={!slot.floor1Busy ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor1Busy ? (e) => handleDrop(e, 1) : undefined}
-                                                                        onClick={() => handleSlotInteraction(slot, 1)}
-                                                                    >
-                                                                        {slot.floor1Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div
-                                                                className="flex items-center justify-center h-full text-[10px] text-gray-300 cursor-move"
-                                                                data-walkway="true"
-                                                            >
-                                                                {/* Walkway */}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
+                        <table className="border-collapse table-fixed w-full">
+                            <thead>
+                                <tr>
+                                    {/* Угловая ячейка */}
+                                    <th className="sticky top-0 left-0 z-30 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem]"></th>
+                                    {/* Заголовки колонок */}
+                                    {columns.map(col => (
+                                        <th
+                                            key={col}
+                                            className="sticky top-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] text-[10px] sm:text-xs font-bold text-center align-middle"
+                                        >
+                                            {col}
+                                        </th>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((rowSlots, rowIndex) => (
+                                    <tr key={rowIndex}>
+                                        {/* Заголовок строки (номер) */}
+                                        <th
+                                            className="sticky left-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs font-bold text-center align-middle"
+                                        >
+                                            {rowIndex + 1}
+                                        </th>
+                                        {/* Ячейки */}
+                                        {rowSlots.map(slot => {
+                                            // Принудительно считаем Y и Z проходами (не складом)
+                                            const isGrayColumn = slot.id.startsWith('Y') || slot.id.startsWith('Z');
+                                            const isStorage = slot.type === 'storage' && !isGrayColumn;
+
+                                            const handleDragStart = (e: React.DragEvent, floor: number) => {
+                                                e.dataTransfer.setData('application/json', JSON.stringify({
+                                                    slotId: slot.id,
+                                                    floor: floor
+                                                }));
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            };
+
+                                            const handleDragOver = (e: React.DragEvent) => {
+                                                e.preventDefault();
+                                                e.dataTransfer.dropEffect = 'move';
+                                            };
+
+                                            const handleDrop = async (e: React.DragEvent, targetFloor: number) => {
+                                                e.preventDefault();
+                                                const data = e.dataTransfer.getData('application/json');
+                                                if (!data) return;
+
+                                                const { slotId: sourceSlotId, floor: sourceFloor } = JSON.parse(data);
+                                                handleMove(sourceSlotId, sourceFloor, slot.id, targetFloor);
+                                            };
+
+                                            return (
+                                                <td
+                                                    key={slot.id}
+                                                    title={getTitle(slot)}
+                                                    className={`relative border ${selectedSlot === slot.id
+                                                        ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-10'
+                                                        : 'border-gray-400'
+                                                        } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] p-0 align-top transition-all overflow-hidden ${isStorage ? 'bg-white' : 'bg-gray-200'
+                                                        }`}
+                                                    style={{ backgroundColor: isStorage ? '#fff' : '#e5e7eb' }}
+                                                >
+                                                    {isStorage ? (
+                                                        <>
+                                                            {/* Номер ячейки (всегда виден) */}
+                                                            <span
+                                                                onClick={() => onSlotClick(slot.id)}
+                                                                className="absolute top-0 left-0.5 text-[9px] sm:text-[10px] md:text-[11px] font-bold text-gray-700 select-none z-10 cursor-pointer"
+                                                            >
+                                                                {slot.id}
+                                                            </span>
+
+                                                            <div className="flex flex-col h-full w-full pt-1">
+                                                                {/* Уровень 2 (Верх) */}
+                                                                <div
+                                                                    className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                        } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
+                                                                        }`}
+                                                                    draggable={slot.floor2Busy}
+                                                                    onDragStart={(e) => slot.floor2Busy && handleDragStart(e, 2)}
+                                                                    onDragOver={!slot.floor2Busy ? handleDragOver : undefined}
+                                                                    onDrop={!slot.floor2Busy ? (e) => handleDrop(e, 2) : undefined}
+                                                                    onClick={() => handleSlotInteraction(slot, 2)}
+                                                                >
+                                                                    {slot.floor2Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
+                                                                </div>
+                                                                {/* Уровень 1 (Низ) */}
+                                                                <div
+                                                                    className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-blue-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                        } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
+                                                                        }`}
+                                                                    draggable={slot.floor1Busy}
+                                                                    onDragStart={(e) => slot.floor1Busy && handleDragStart(e, 1)}
+                                                                    onDragOver={!slot.floor1Busy ? handleDragOver : undefined}
+                                                                    onDrop={!slot.floor1Busy ? (e) => handleDrop(e, 1) : undefined}
+                                                                    onClick={() => handleSlotInteraction(slot, 1)}
+                                                                >
+                                                                    {slot.floor1Busy && <RollIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 opacity-60" />}
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div
+                                                            className="flex items-center justify-center h-full text-[10px] text-gray-300 cursor-move"
+                                                            data-walkway="true"
+                                                        >
+                                                            {/* Walkway */}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
 
                     <div className="mt-3 sm:mt-4">
@@ -455,7 +450,5 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                         </button>
                     </div>
                 </>
-            )}
-        </div>
-    );
-}
+            )
+            }
