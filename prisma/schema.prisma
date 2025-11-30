@@ -48,6 +48,7 @@ model ActionHistory {
   oldData     Json?    // Предыдущее состояние
   newData     Json?    // Новое состояние
   timestamp   DateTime @default(now())
+  isUndone    Boolean  @default(false) // Отменено ли действие
   
   @@map("action_history")
   @@index([timestamp])
