@@ -352,6 +352,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                             {/* Ячейки */}
                                             {rowSlots.map(slot => {
                                                 const isStorage = slot.type === 'storage';
+                                                const isGrayColumn = slot.id.startsWith('Y') || slot.id.startsWith('Z');
 
                                                 const handleDragStart = (e: React.DragEvent, floor: number) => {
                                                     e.dataTransfer.setData('application/json', JSON.stringify({
@@ -382,9 +383,9 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                         className={`relative border ${selectedSlot === slot.id
                                                             ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-10'
                                                             : 'border-gray-400'
-                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] p-0 align-top transition-all overflow-hidden ${isStorage ? 'bg-white' : 'bg-gray-100'
+                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] p-0 align-top transition-all overflow-hidden ${isStorage && !isGrayColumn ? 'bg-white' : 'bg-gray-100'
                                                             }`}
-                                                        style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
+                                                        style={{ backgroundColor: isStorage && !isGrayColumn ? '#fff' : '#eeeeee' }}
                                                     >
                                                         {isStorage ? (
                                                             <>
@@ -399,7 +400,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 <div className="flex flex-col h-full w-full pt-1">
                                                                     {/* Уровень 2 (Верх) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'bg-gray-100 cursor-pointer' : 'bg-green-50 cursor-pointer')
                                                                             } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
                                                                         draggable={slot.floor2Busy}
@@ -412,7 +413,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                     </div>
                                                                     {/* Уровень 1 (Низ) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : (isGrayColumn ? 'bg-gray-100 cursor-pointer' : 'bg-green-50 cursor-pointer')
                                                                             } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
                                                                         draggable={slot.floor1Busy}
