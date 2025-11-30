@@ -6,6 +6,8 @@ import ControlPanel from '@/components/ControlPanel';
 import WarehouseReport from '@/components/WarehouseReport';
 import HistoryPanel from '@/components/HistoryPanel';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mapKey, setMapKey] = useState(0);
@@ -26,7 +28,7 @@ export default function Home() {
         <header className="bg-white p-4 sm:p-6 rounded-lg shadow flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
-              Система управления складом
+              Система управления складом v2.0
             </h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
               Управление продукцией на складе экструзии
