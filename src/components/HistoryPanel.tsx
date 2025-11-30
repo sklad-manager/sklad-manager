@@ -41,7 +41,8 @@ export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => voi
                 loadHistory();
                 onUpdate();
             } else {
-                alert('Не удалось отменить действие');
+                const data = await res.json();
+                alert(`Не удалось отменить действие: ${data.error || 'Неизвестная ошибка'}`);
             }
         } catch (e) {
             alert('Ошибка сети');
@@ -56,7 +57,8 @@ export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => voi
                 loadHistory();
                 onUpdate();
             } else {
-                alert('Не удалось повторить действие');
+                const data = await res.json();
+                alert(`Не удалось повторить действие: ${data.error || 'Неизвестная ошибка'}`);
             }
         } catch (e) {
             alert('Ошибка сети');
@@ -147,9 +149,9 @@ export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => voi
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span className={`px-2 py-1 rounded text-xs font-semibold ${item.action === 'create' ? 'bg-green-100 text-green-800' :
-                                                        item.action === 'delete' ? 'bg-red-100 text-red-800' :
-                                                            item.action === 'move' ? 'bg-blue-100 text-blue-800' :
-                                                                'bg-yellow-100 text-yellow-800'
+                                                    item.action === 'delete' ? 'bg-red-100 text-red-800' :
+                                                        item.action === 'move' ? 'bg-blue-100 text-blue-800' :
+                                                            'bg-yellow-100 text-yellow-800'
                                                     }`}>
                                                     {getActionLabel(item.action)}
                                                 </span>

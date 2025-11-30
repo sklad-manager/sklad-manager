@@ -18,11 +18,24 @@ export async function POST() {
         // Выполняем обратное действие
         if (action === 'create') {
             // Было создано -> удаляем
-            await prisma.product.delete({
-                where: { id: newData.id }
-            });
+            // Проверяем, существует ли продукт
+            const product = await prisma.product.findUnique({ where: { id: newData.id } });
+            if (product) {
+                await prisma.product.delete({
+                    where: { id: newData.id }
+                });
+            }
+            // Если продукта нет, считаем, что отмена уже произошла (или продукт удален вручную)
         } else if (action === 'delete') {
             // Было удалено -> восстанавливаем
+            // Проверяем, свободна ли ячейка
+            const busy = await prisma.product.findFirst({
+                where: { slotId: oldData.slotId, floor: oldData.floor }
+            });
+            if (busy) {
+                return NextResponse.json({ error: `Ячейка ${oldData.slotId} (эт.${oldData.floor}) уже занята` }, { status: 400 });
+            }
+
             await prisma.product.create({
                 data: {
                     slotId: oldData.slotId,
@@ -37,6 +50,11 @@ export async function POST() {
             });
         } else if (action === 'update') {
             // Было обновлено -> возвращаем старые данные
+            const product = await prisma.product.findUnique({ where: { id: oldData.id } });
+            if (!product) {
+                return NextResponse.json({ error: 'Продукт не найден (возможно, был удален)' }, { status: 400 });
+            }
+
             await prisma.product.update({
                 where: { id: oldData.id },
                 data: {
@@ -50,6 +68,19 @@ export async function POST() {
             });
         } else if (action === 'move') {
             // Было перемещено -> возвращаем назад
+            const product = await prisma.product.findUnique({ where: { id: newData.id } });
+            if (!product) {
+                return NextResponse.json({ error: 'Продукт не найден (возможно, был удален)' }, { status: 400 });
+            }
+
+            // Проверяем, свободна ли старая ячейка
+            const busy = await prisma.product.findFirst({
+                where: { slotId: oldData.slotId, floor: oldData.floor }
+            });
+            if (busy) {
+                return NextResponse.json({ error: `Исходная ячейка ${oldData.slotId} (эт.${oldData.floor}) уже занята` }, { status: 400 });
+            }
+
             await prisma.product.update({
                 where: { id: newData.id }, // ID продукта тот же
                 data: {
@@ -66,8 +97,8 @@ export async function POST() {
         });
 
         return NextResponse.json({ message: 'Действие отменено', action: lastAction });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Undo error:', error);
-        return NextResponse.json({ error: 'Ошибка отмены действия' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Ошибка отмены действия' }, { status: 500 });
     }
 }
