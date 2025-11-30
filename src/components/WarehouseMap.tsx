@@ -450,5 +450,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                         </button>
                     </div>
                 </>
-            )
-            }
+            )}
+        </div>
+    );
+}
