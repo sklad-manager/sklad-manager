@@ -10,6 +10,7 @@ interface HistoryAction {
     oldData: any;
     newData: any;
     timestamp: string;
+    isUndone?: boolean;
 }
 
 export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => void, onUpdate: () => void }) {
@@ -29,6 +30,36 @@ export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => voi
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUndo = async () => {
+        if (!confirm('Отменить последнее действие?')) return;
+        try {
+            const res = await fetch('/api/history/undo', { method: 'POST' });
+            if (res.ok) {
+                loadHistory();
+                onUpdate();
+            } else {
+                alert('Не удалось отменить действие');
+            }
+        } catch (e) {
+            alert('Ошибка сети');
+        }
+    };
+
+    const handleRedo = async () => {
+        if (!confirm('Повторить отмененное действие?')) return;
+        try {
+            const res = await fetch('/api/history/redo', { method: 'POST' });
+            if (res.ok) {
+                loadHistory();
+                onUpdate();
+            } else {
+                alert('Не удалось повторить действие');
+            }
+        } catch (e) {
+            alert('Ошибка сети');
         }
     };
 
@@ -63,17 +94,88 @@ export default function HistoryPanel({ onClose, onUpdate }: { onClose: () => voi
         if (item.action === 'create') {
             return `Заказ: ${item.newData?.orderNum || '?'}`;
         }
-                </div >
+        if (item.action === 'delete') {
+            return `Заказ: ${item.oldData?.orderNum || '?'}`;
+        }
+        return `${item.slotId} (эт.${item.floor})`;
+    };
 
-        <div className="p-4 border-t bg-gray-50 rounded-b-lg flex justify-end">
-            <button
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-                Закрыть
-            </button>
+    if (loading) return <div className="p-8 text-center">Загрузка истории...</div>;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                    <h2 className="text-xl font-bold text-gray-800">История действий</h2>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleUndo}
+                            className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 text-sm font-medium flex items-center gap-1"
+                        >
+                            ↩ Отменить
+                        </button>
+                        <button
+                            onClick={handleRedo}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium flex items-center gap-1"
+                        >
+                            ↪ Повторить
+                        </button>
+                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl ml-4">&times;</button>
+                    </div>
+                </div>
+
+                <div className="p-4 overflow-y-auto flex-1">
+                    {history.length === 0 ? (
+                        <div className="text-center text-gray-500 py-8">История пуста</div>
+                    ) : (
+                        <div className="overflow-x-auto border rounded-lg">
+                            <table className="w-full text-sm text-left text-gray-500">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3">Дата/Время</th>
+                                        <th className="px-4 py-3">Действие</th>
+                                        <th className="px-4 py-3">Ячейка</th>
+                                        <th className="px-4 py-3">Детали</th>
+                                        <th className="px-4 py-3">Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {history.map((item) => (
+                                        <tr key={item.id} className={`border-b hover:bg-gray-50 ${item.isUndone ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                                            <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                                                {formatTimestamp(item.timestamp)}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`px-2 py-1 rounded text-xs font-semibold ${item.action === 'create' ? 'bg-green-100 text-green-800' :
+                                                        item.action === 'delete' ? 'bg-red-100 text-red-800' :
+                                                            item.action === 'move' ? 'bg-blue-100 text-blue-800' :
+                                                                'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                    {getActionLabel(item.action)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 font-mono">{item.slotId}</td>
+                                            <td className="px-4 py-3 text-xs">{getDetails(item)}</td>
+                                            <td className="px-4 py-3 text-xs">
+                                                {item.isUndone && <span className="text-red-500 font-bold">ОТМЕНЕНО</span>}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-4 border-t bg-gray-50 rounded-b-lg flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                    >
+                        Закрыть
+                    </button>
+                </div>
+            </div>
         </div>
-            </div >
-        </div >
     );
 }
