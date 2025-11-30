@@ -355,7 +355,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                         width: `${100 / zoomLevel}%`
                                     }}
                                 >
-                                    <table className="border-collapse">
+                                    <table className="border-collapse table-fixed w-full">
                                         <tbody>
                                             {rows.map((rowSlots, rowIndex) => (
                                                 <tr key={rowIndex}>
@@ -391,7 +391,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 className={`relative border ${selectedSlot === slot.id
                                                                     ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
                                                                     : 'border-gray-400'
-                                                                    } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'bg-white' : 'bg-gray-100'
+                                                                    } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] p-0 align-top transition-all overflow-hidden ${isStorage ? 'bg-white' : 'bg-gray-100'
                                                                     }`}
                                                                 style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
                                                             >
