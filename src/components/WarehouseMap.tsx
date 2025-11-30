@@ -415,7 +415,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                     </div>
                                                                     {/* Уровень 1 (Низ) */}
                                                                     <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-blue-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
                                                                             } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
                                                                             }`}
                                                                         draggable={slot.floor1Busy}
