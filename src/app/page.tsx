@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import WarehouseMap from '@/components/WarehouseMap';
 import ControlPanel from '@/components/ControlPanel';
+import WarehouseReport from '@/components/WarehouseReport';
 
 export default function Home() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mapKey, setMapKey] = useState(0);
+  const [showReport, setShowReport] = useState(false);
 
   const handleSlotClick = (slotId: string) => {
     setSelectedSlot(slotId);
@@ -19,13 +21,21 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
-        <header className="bg-white p-4 sm:p-6 rounded-lg shadow">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
-            Система управления складом
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
-            Управление продукцией на складе экструзии
-          </p>
+        <header className="bg-white p-4 sm:p-6 rounded-lg shadow flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+              Система управления складом
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
+              Управление продукцией на складе экструзии
+            </p>
+          </div>
+          <button
+            onClick={() => setShowReport(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
+          >
+            📊 Отчеты
+          </button>
         </header>
 
         {/* Mobile: вертикальная раскладка, Desktop: горизонтальная */}
@@ -41,6 +51,13 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно отчета */}
+      {showReport && (
+        <div className="fixed inset-0 z-50">
+          <WarehouseReport onClose={() => setShowReport(false)} />
+        </div>
+      )}
     </div>
   );
 }
