@@ -36,7 +36,7 @@ const RollIcon = ({ className = "" }: { className?: string }) => (
 export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMapProps) {
     const [map, setMap] = useState<SlotData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isMoveMode, setIsMoveMode] = useState(false);
+
     const [moveSource, setMoveSource] = useState<{ slotId: string, floor: number } | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -140,13 +140,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
     };
 
     const handleSlotInteraction = (slot: SlotData, floor: number) => {
-        if (!isMoveMode) {
-            // Обычный режим: просто выбираем ячейку для просмотра
-            onSlotClick(slot.id);
-            return;
-        }
-
-        // Режим перемещения
+        // Режим перемещения (Tap-to-Move)
         if (!moveSource) {
             // Выбор источника
             const isBusy = floor === 1 ? slot.floor1Busy : slot.floor2Busy;
@@ -268,18 +262,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                     </button>
                 </div>
 
-                <button
-                    onClick={() => {
-                        setIsMoveMode(!isMoveMode);
-                        setMoveSource(null);
-                    }}
-                    className={`px-3 py-1 rounded text-xs sm:text-sm font-bold shadow transition-colors ${isMoveMode
-                            ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                        }`}
-                >
-                    {isMoveMode ? '🖐️ Перемещение' : '🖐️ Перемещение'}
-                </button>
+
             </div>
 
             {loading && (
@@ -318,11 +301,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
             ) : (
                 <>
                     {/* Инструкция для режима перемещения */}
-                    {isMoveMode && (
+                    {/* Инструкция при активном перемещении */}
+                    {moveSource && (
                         <div className="mb-2 p-2 bg-blue-50 text-blue-800 text-xs sm:text-sm rounded border border-blue-100">
-                            {moveSource
-                                ? `Выбрано: ${moveSource.slotId} (эт. ${moveSource.floor}). Нажмите на другую ячейку для перемещения.`
-                                : 'Нажмите на товар, чтобы выбрать его для перемещения.'}
+                            Выбрано: {moveSource.slotId} (эт. {moveSource.floor}). Нажмите на другую ячейку для перемещения.
                         </div>
                     )}
 
@@ -407,8 +389,8 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 key={slot.id}
                                                                 title={getTitle(slot)}
                                                                 className={`relative border ${selectedSlot === slot.id
-                                                                        ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
-                                                                        : 'border-gray-400'
+                                                                    ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
+                                                                    : 'border-gray-400'
                                                                     } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'bg-white' : 'bg-gray-100'
                                                                     }`}
                                                                 style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
@@ -429,10 +411,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                                 className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
                                                                                     } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
                                                                                     }`}
-                                                                                draggable={slot.floor2Busy && !isMoveMode}
-                                                                                onDragStart={(e) => slot.floor2Busy && !isMoveMode && handleDragStart(e, 2)}
-                                                                                onDragOver={!slot.floor2Busy && !isMoveMode ? handleDragOver : undefined}
-                                                                                onDrop={!slot.floor2Busy && !isMoveMode ? (e) => handleDrop(e, 2) : undefined}
+                                                                                draggable={slot.floor2Busy}
+                                                                                onDragStart={(e) => slot.floor2Busy && handleDragStart(e, 2)}
+                                                                                onDragOver={!slot.floor2Busy ? handleDragOver : undefined}
+                                                                                onDrop={!slot.floor2Busy ? (e) => handleDrop(e, 2) : undefined}
                                                                                 onClick={() => handleSlotInteraction(slot, 2)}
                                                                             >
                                                                                 {slot.floor2Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
@@ -442,10 +424,10 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                                 className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
                                                                                     } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
                                                                                     }`}
-                                                                                draggable={slot.floor1Busy && !isMoveMode}
-                                                                                onDragStart={(e) => slot.floor1Busy && !isMoveMode && handleDragStart(e, 1)}
-                                                                                onDragOver={!slot.floor1Busy && !isMoveMode ? handleDragOver : undefined}
-                                                                                onDrop={!slot.floor1Busy && !isMoveMode ? (e) => handleDrop(e, 1) : undefined}
+                                                                                draggable={slot.floor1Busy}
+                                                                                onDragStart={(e) => slot.floor1Busy && handleDragStart(e, 1)}
+                                                                                onDragOver={!slot.floor1Busy ? handleDragOver : undefined}
+                                                                                onDrop={!slot.floor1Busy ? (e) => handleDrop(e, 1) : undefined}
                                                                                 onClick={() => handleSlotInteraction(slot, 1)}
                                                                             >
                                                                                 {slot.floor1Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
