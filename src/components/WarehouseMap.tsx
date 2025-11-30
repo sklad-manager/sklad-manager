@@ -394,7 +394,8 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                                                 {/* Номер ячейки (всегда виден) */}
                                                                 <span
                                                                     onClick={() => onSlotClick(slot.id)}
-                                                                    className="absolute top-0 left-0.5 text-[6px] sm:text-[7px] md:text-[8px] font-bold text-gray-500 select-none z-10 cursor-pointer"
+                                                                    className="absolute top-0.5 left-0.5 text-[9px] sm:text-[10px] md:text-[11px] font-bold text-gray-600 select-none z-10 cursor-pointer"
+                                                                    style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}
                                                                 >
                                                                     {slot.id}
                                                                 </span>
