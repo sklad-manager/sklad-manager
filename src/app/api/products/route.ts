@@ -80,6 +80,17 @@ export async function POST(request: NextRequest) {
                 where: { id: existing.id },
                 data: { orderNum, rolls, meterage, density, rollWeight, comment },
             });
+
+            // Логируем изменение
+            await (prisma as any).actionHistory.create({
+                data: {
+                    action: 'update',
+                    slotId: existing.slotId,
+                    floor: existing.floor,
+                    oldData: existing,
+                    newData: product
+                }
+            });
         } else {
             // Создаем
             product = await prisma.product.create({
@@ -93,6 +104,16 @@ export async function POST(request: NextRequest) {
                     rollWeight,
                     comment,
                 },
+            });
+
+            // Логируем создание
+            await (prisma as any).actionHistory.create({
+                data: {
+                    action: 'create',
+                    slotId: product.slotId,
+                    floor: product.floor,
+                    newData: product
+                }
             });
         }
 
@@ -126,7 +147,20 @@ export async function DELETE(request: NextRequest) {
             where.floor = parseInt(floor);
         }
 
+        const toDelete = await prisma.product.findMany({ where });
         await prisma.product.deleteMany({ where });
+
+        // Логируем удаление
+        for (const p of toDelete) {
+            await (prisma as any).actionHistory.create({
+                data: {
+                    action: 'delete',
+                    slotId: p.slotId,
+                    floor: p.floor,
+                    oldData: p
+                }
+            });
+        }
 
         return NextResponse.json({ message: 'Продукция удалена' });
     } catch (error) {
@@ -179,6 +213,17 @@ export async function PATCH(request: NextRequest) {
                     slotId: targetSlotId.toUpperCase(),
                     floor: targetFloor,
                 },
+            });
+
+            // Логируем перемещение
+            await (prisma as any).actionHistory.create({
+                data: {
+                    action: 'move',
+                    slotId: product.slotId, // исходная ячейка
+                    floor: product.floor,
+                    oldData: { slotId: product.slotId, floor: product.floor },
+                    newData: { slotId: updated.slotId, floor: updated.floor }
+                }
             });
 
             return NextResponse.json({ product: updated });

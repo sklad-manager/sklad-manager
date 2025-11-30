@@ -32,18 +32,20 @@ export default function Home() {
               Управление продукцией на складе экструзии
             </p>
           </div>
-          <button
-            onClick={() => setShowReport(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
-          >
-            📊 Отчеты
-          </button>
-          <button
-            onClick={() => setShowHistory(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
-          >
-            📜 История
-          </button>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => setShowReport(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              📊 Отчеты
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              📜 История
+            </button>
+          </div>
         </header>
 
         {/* Mobile: вертикальная раскладка, Desktop: горизонтальная */}
