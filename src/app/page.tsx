@@ -4,11 +4,13 @@ import { useState } from 'react';
 import WarehouseMap from '@/components/WarehouseMap';
 import ControlPanel from '@/components/ControlPanel';
 import WarehouseReport from '@/components/WarehouseReport';
+import HistoryPanel from '@/components/HistoryPanel';
 
 export default function Home() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mapKey, setMapKey] = useState(0);
   const [showReport, setShowReport] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSlotClick = (slotId: string) => {
     setSelectedSlot(slotId);
@@ -36,6 +38,12 @@ export default function Home() {
           >
             📊 Отчеты
           </button>
+          <button
+            onClick={() => setShowHistory(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
+          >
+            📜 История
+          </button>
         </header>
 
         {/* Mobile: вертикальная раскладка, Desktop: горизонтальная */}
@@ -56,6 +64,13 @@ export default function Home() {
       {showReport && (
         <div className="fixed inset-0 z-50">
           <WarehouseReport onClose={() => setShowReport(false)} />
+        </div>
+      )}
+
+      {/* Модальное окно истории */}
+      {showHistory && (
+        <div className="fixed inset-0 z-50">
+          <HistoryPanel onClose={() => setShowHistory(false)} onUpdate={handleUpdate} />
         </div>
       )}
     </div>

@@ -38,3 +38,18 @@ model Product {
   @@index([slotId])
   @@index([orderNum])
 }
+
+// Модель для истории действий
+model ActionHistory {
+  id          Int      @id @default(autoincrement())
+  action      String   // "create", "update", "delete", "move"
+  slotId      String   // Ячейка
+  floor       Int?     // Этаж (1 или 2)
+  oldData     Json?    // Предыдущее состояние
+  newData     Json?    // Новое состояние
+  timestamp   DateTime @default(now())
+  
+  @@map("action_history")
+  @@index([timestamp])
+  @@index([slotId])
+}
