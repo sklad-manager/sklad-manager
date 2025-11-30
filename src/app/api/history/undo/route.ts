@@ -68,7 +68,19 @@ export async function POST() {
             });
         } else if (action === 'move') {
             // Было перемещено -> возвращаем назад
-            const product = await prisma.product.findUnique({ where: { id: newData.id } });
+            let product;
+            if (newData.id) {
+                product = await prisma.product.findUnique({ where: { id: newData.id } });
+            } else {
+                // Если ID не сохранился (старые записи), ищем по текущему местоположению
+                product = await prisma.product.findFirst({
+                    where: {
+                        slotId: newData.slotId,
+                        floor: newData.floor
+                    }
+                });
+            }
+
             if (!product) {
                 return NextResponse.json({ error: 'Продукт не найден (возможно, был удален)' }, { status: 400 });
             }
@@ -82,7 +94,7 @@ export async function POST() {
             }
 
             await prisma.product.update({
-                where: { id: newData.id }, // ID продукта тот же
+                where: { id: product.id },
                 data: {
                     slotId: oldData.slotId,
                     floor: oldData.floor

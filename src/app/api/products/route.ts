@@ -221,8 +221,8 @@ export async function PATCH(request: NextRequest) {
                     action: 'move',
                     slotId: product.slotId, // исходная ячейка
                     floor: product.floor,
-                    oldData: { slotId: product.slotId, floor: product.floor },
-                    newData: { slotId: updated.slotId, floor: updated.floor }
+                    oldData: { id: product.id, slotId: product.slotId, floor: product.floor },
+                    newData: { id: updated.id, slotId: updated.slotId, floor: updated.floor }
                 }
             });
 

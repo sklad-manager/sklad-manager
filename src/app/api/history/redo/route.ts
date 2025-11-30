@@ -102,13 +102,30 @@ export async function POST() {
             });
         } else if (action === 'move') {
             // Перемещаем вперед
-            await prisma.product.update({
-                where: { id: newData.id },
-                data: {
-                    slotId: newData.slotId,
-                    floor: newData.floor
-                }
-            });
+            let productId = newData.id;
+
+            if (!productId) {
+                // Если ID нет, ищем продукт в старой позиции (oldData)
+                const product = await prisma.product.findFirst({
+                    where: {
+                        slotId: oldData.slotId,
+                        floor: oldData.floor
+                    }
+                });
+                if (product) productId = product.id;
+            }
+
+            if (productId) {
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        slotId: newData.slotId,
+                        floor: newData.floor
+                    }
+                });
+            } else {
+                return NextResponse.json({ error: 'Продукт для перемещения не найден' }, { status: 400 });
+            }
         }
 
         // Помечаем как активное (не отмененное)
