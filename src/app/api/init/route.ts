@@ -6,7 +6,7 @@ export async function POST() {
     try {
         // Создаем или обновляем ячейки склада
         const slots = [];
-        const columns = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
+        const columns = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
         for (let row = 1; row <= 13; row++) {
             for (const col of columns) {
@@ -16,7 +16,7 @@ export async function POST() {
                 // Определяем, является ли ячейка складом
                 const colIndex = columns.indexOf(col);
 
-                // Склад: колонки C-X (индексы 2-23)
+                // Склад: колонки C-X (индексы 2-23), Y и Z - проходы
                 if (colIndex >= 2 && colIndex <= 23) {
                     // Строки 2-5 и 8-12 - склад (1-й ряд теперь проход!)
                     if ((row >= 2 && row <= 5) || (row >= 8 && row <= 12)) {

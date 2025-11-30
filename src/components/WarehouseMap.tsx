@@ -142,7 +142,6 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
     const handleSlotInteraction = (slot: SlotData, floor: number) => {
         if (!isMoveMode) {
             // Обычный режим: просто выбираем ячейку для просмотра
-            // Но клик по этажу тоже должен выбирать ячейку
             onSlotClick(slot.id);
             return;
         }
@@ -228,8 +227,8 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
         return lines.join('\n');
     };
 
-    // Группируем по строкам (1-13) и колонкам (A-X)
-    const columns = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
+    // Группируем по строкам (1-13) и колонкам (A-Z)
+    const columns = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const rows: SlotData[][] = [];
 
     for (let row = 1; row <= 13; row++) {
@@ -279,7 +278,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                         }`}
                 >
-                    {isMoveMode ? '🖐️ Перемещение' : '👆 Просмотр'}
+                    {isMoveMode ? '🖐️ Перемещение' : '🖐️ Перемещение'}
                 </button>
             </div>
 
@@ -327,132 +326,152 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                         </div>
                     )}
 
-                    {/* Контейнер с горизонтальной прокруткой */}
-                    <div
-                        ref={containerRef}
-                        className={`overflow-x-auto -mx-2 sm:mx-0 touch-pan-x border border-gray-200 rounded ${isDragging ? 'select-none' : ''}`}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                    >
-                        <div
-                            className="inline-block min-w-full px-2 sm:px-0 origin-top-left transition-transform duration-200 ease-out"
-                            style={{
-                                transform: `scale(${zoomLevel})`,
-                                width: `${100 / zoomLevel}%` // Компенсация ширины при зуме
-                            }}
-                        >
-                            <table className="border-collapse w-full">
-                                <thead>
-                                    <tr>
-                                        {/* Адаптивные размеры: mobile 32px, tablet 40px, desktop 48px */}
-                                        <th className="border border-gray-300 w-8 h-6 sm:w-10 sm:h-7 md:w-12 md:h-8 text-[10px] sm:text-xs bg-gray-100 sticky left-0 z-10"></th>
-                                        {columns.map(col => (
-                                            <th key={col} className="border border-gray-300 w-8 h-6 sm:w-10 sm:h-7 md:w-12 md:h-8 text-[10px] sm:text-xs bg-gray-100">
-                                                {col}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map((rowSlots, rowIndex) => (
-                                        <tr key={rowIndex}>
-                                            <td className="border border-gray-300 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs text-center bg-gray-100 font-bold sticky left-0 z-10">
-                                                {rowIndex + 1}
-                                            </td>
-                                            {rowSlots.map(slot => {
-                                                const isStorage = slot.type === 'storage';
+                    {/* Контейнер с внешними заголовками */}
+                    <div className="relative">
+                        {/* Заголовки колонок (A, B, C...) - снаружи таблицы */}
+                        <div className="flex mb-1">
+                            {/* Пустое место для номеров строк */}
+                            <div className="w-8 sm:w-10 md:w-12"></div>
+                            {/* Буквы колонок */}
+                            {columns.map(col => (
+                                <div
+                                    key={col}
+                                    className="w-8 h-6 sm:w-10 sm:h-7 md:w-12 md:h-8 text-[10px] sm:text-xs font-bold text-center flex items-center justify-center bg-gray-50 border border-gray-200"
+                                >
+                                    {col}
+                                </div>
+                            ))}
+                        </div>
 
-                                                const handleDragStart = (e: React.DragEvent, floor: number) => {
-                                                    e.dataTransfer.setData('application/json', JSON.stringify({
-                                                        slotId: slot.id,
-                                                        floor: floor
-                                                    }));
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                };
+                        {/* Контейнер с горизонтальной прокруткой */}
+                        <div className="flex">
+                            {/* Номера строк (1, 2, 3...) - снаружи таблицы */}
+                            <div className="flex flex-col">
+                                {rows.map((_, rowIndex) => (
+                                    <div
+                                        key={rowIndex}
+                                        className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs text-center font-bold flex items-center justify-center bg-gray-50 border border-gray-200"
+                                    >
+                                        {rowIndex + 1}
+                                    </div>
+                                ))}
+                            </div>
 
-                                                const handleDragOver = (e: React.DragEvent) => {
-                                                    e.preventDefault();
-                                                    e.dataTransfer.dropEffect = 'move';
-                                                };
+                            {/* Таблица с ячейками */}
+                            <div
+                                ref={containerRef}
+                                className={`overflow-x-auto touch-pan-x border border-gray-200 ${isDragging ? 'select-none' : ''}`}
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseUp}
+                            >
+                                <div
+                                    className="inline-block origin-top-left transition-transform duration-200 ease-out"
+                                    style={{
+                                        transform: `scale(${zoomLevel})`,
+                                        width: `${100 / zoomLevel}%`
+                                    }}
+                                >
+                                    <table className="border-collapse">
+                                        <tbody>
+                                            {rows.map((rowSlots, rowIndex) => (
+                                                <tr key={rowIndex}>
+                                                    {rowSlots.map(slot => {
+                                                        const isStorage = slot.type === 'storage';
 
-                                                const handleDrop = async (e: React.DragEvent, targetFloor: number) => {
-                                                    e.preventDefault();
-                                                    const data = e.dataTransfer.getData('application/json');
-                                                    if (!data) return;
+                                                        const handleDragStart = (e: React.DragEvent, floor: number) => {
+                                                            e.dataTransfer.setData('application/json', JSON.stringify({
+                                                                slotId: slot.id,
+                                                                floor: floor
+                                                            }));
+                                                            e.dataTransfer.effectAllowed = 'move';
+                                                        };
 
-                                                    const { slotId: sourceSlotId, floor: sourceFloor } = JSON.parse(data);
-                                                    handleMove(sourceSlotId, sourceFloor, slot.id, targetFloor);
-                                                };
+                                                        const handleDragOver = (e: React.DragEvent) => {
+                                                            e.preventDefault();
+                                                            e.dataTransfer.dropEffect = 'move';
+                                                        };
 
-                                                return (
-                                                    <td
-                                                        key={slot.id}
-                                                        title={getTitle(slot)}
-                                                        className={`relative border ${selectedSlot === slot.id
-                                                                ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
-                                                                : 'border-gray-400'
-                                                            } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'bg-white' : 'bg-gray-100'
-                                                            }`}
-                                                        style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
-                                                    >
-                                                        {isStorage ? (
-                                                            <>
-                                                                {/* Номер ячейки (всегда виден) */}
-                                                                <span
-                                                                    onClick={() => onSlotClick(slot.id)}
-                                                                    className="absolute top-0 left-0.5 text-[6px] sm:text-[7px] md:text-[8px] font-bold text-gray-500 select-none z-10 cursor-pointer"
-                                                                >
-                                                                    {slot.id}
-                                                                </span>
+                                                        const handleDrop = async (e: React.DragEvent, targetFloor: number) => {
+                                                            e.preventDefault();
+                                                            const data = e.dataTransfer.getData('application/json');
+                                                            if (!data) return;
 
-                                                                <div className="flex flex-col h-full w-full pt-1">
-                                                                    {/* Уровень 2 (Верх) */}
-                                                                    <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
-                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
-                                                                            }`}
-                                                                        draggable={slot.floor2Busy && !isMoveMode}
-                                                                        onDragStart={(e) => slot.floor2Busy && !isMoveMode && handleDragStart(e, 2)}
-                                                                        onDragOver={!slot.floor2Busy && !isMoveMode ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor2Busy && !isMoveMode ? (e) => handleDrop(e, 2) : undefined}
-                                                                        onClick={() => handleSlotInteraction(slot, 2)}
-                                                                    >
-                                                                        {slot.floor2Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
-                                                                    </div>
-                                                                    {/* Уровень 1 (Низ) */}
-                                                                    <div
-                                                                        className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
-                                                                            } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
-                                                                            }`}
-                                                                        draggable={slot.floor1Busy && !isMoveMode}
-                                                                        onDragStart={(e) => slot.floor1Busy && !isMoveMode && handleDragStart(e, 1)}
-                                                                        onDragOver={!slot.floor1Busy && !isMoveMode ? handleDragOver : undefined}
-                                                                        onDrop={!slot.floor1Busy && !isMoveMode ? (e) => handleDrop(e, 1) : undefined}
-                                                                        onClick={() => handleSlotInteraction(slot, 1)}
-                                                                    >
-                                                                        {slot.floor1Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div
-                                                                className="flex items-center justify-center h-full text-[10px] text-gray-300 cursor-move"
-                                                                data-walkway="true"
+                                                            const { slotId: sourceSlotId, floor: sourceFloor } = JSON.parse(data);
+                                                            handleMove(sourceSlotId, sourceFloor, slot.id, targetFloor);
+                                                        };
+
+                                                        return (
+                                                            <td
+                                                                key={slot.id}
+                                                                title={getTitle(slot)}
+                                                                className={`relative border ${selectedSlot === slot.id
+                                                                        ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-300 z-20'
+                                                                        : 'border-gray-400'
+                                                                    } w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-0 align-top transition-all ${isStorage ? 'bg-white' : 'bg-gray-100'
+                                                                    }`}
+                                                                style={{ backgroundColor: isStorage ? '#fff' : '#eeeeee' }}
                                                             >
-                                                                {/* Walkway */}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                                {isStorage ? (
+                                                                    <>
+                                                                        {/* Номер ячейки (всегда виден) */}
+                                                                        <span
+                                                                            onClick={() => onSlotClick(slot.id)}
+                                                                            className="absolute top-0 left-0.5 text-[6px] sm:text-[7px] md:text-[8px] font-bold text-gray-500 select-none z-10 cursor-pointer"
+                                                                        >
+                                                                            {slot.id}
+                                                                        </span>
+
+                                                                        <div className="flex flex-col h-full w-full pt-1">
+                                                                            {/* Уровень 2 (Верх) */}
+                                                                            <div
+                                                                                className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 border-b border-gray-200 transition-colors ${slot.floor2Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                                    } ${moveSource?.slotId === slot.id && moveSource?.floor === 2 ? 'ring-2 ring-green-500 z-30' : ''
+                                                                                    }`}
+                                                                                draggable={slot.floor2Busy && !isMoveMode}
+                                                                                onDragStart={(e) => slot.floor2Busy && !isMoveMode && handleDragStart(e, 2)}
+                                                                                onDragOver={!slot.floor2Busy && !isMoveMode ? handleDragOver : undefined}
+                                                                                onDrop={!slot.floor2Busy && !isMoveMode ? (e) => handleDrop(e, 2) : undefined}
+                                                                                onClick={() => handleSlotInteraction(slot, 2)}
+                                                                            >
+                                                                                {slot.floor2Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
+                                                                            </div>
+                                                                            {/* Уровень 1 (Низ) */}
+                                                                            <div
+                                                                                className={`flex-1 flex items-center justify-center pl-2 sm:pl-3 md:pl-4 transition-colors ${slot.floor1Busy ? 'bg-red-100 cursor-grab active:cursor-grabbing' : 'bg-green-50 cursor-pointer'
+                                                                                    } ${moveSource?.slotId === slot.id && moveSource?.floor === 1 ? 'ring-2 ring-green-500 z-30' : ''
+                                                                                    }`}
+                                                                                draggable={slot.floor1Busy && !isMoveMode}
+                                                                                onDragStart={(e) => slot.floor1Busy && !isMoveMode && handleDragStart(e, 1)}
+                                                                                onDragOver={!slot.floor1Busy && !isMoveMode ? handleDragOver : undefined}
+                                                                                onDrop={!slot.floor1Busy && !isMoveMode ? (e) => handleDrop(e, 1) : undefined}
+                                                                                onClick={() => handleSlotInteraction(slot, 1)}
+                                                                            >
+                                                                                {slot.floor1Busy && <RollIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <div
+                                                                        className="flex items-center justify-center h-full text-[10px] text-gray-300 cursor-move"
+                                                                        data-walkway="true"
+                                                                    >
+                                                                        {/* Walkway */}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <div className="mt-3 sm:mt-4">
                         <button
                             onClick={loadMap}
