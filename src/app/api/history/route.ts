@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
         const where = slotId ? { slotId } : {};
 
-        const history = await prisma.actionHistory.findMany({
+        const history = await (prisma as any).actionHistory.findMany({
             where,
             orderBy: { timestamp: 'desc' },
             take: limit
