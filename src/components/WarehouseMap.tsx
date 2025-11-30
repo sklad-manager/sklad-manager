@@ -325,12 +325,12 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                             <thead>
                                 <tr>
                                     {/* Угловая ячейка */}
-                                    <th className="sticky top-0 left-0 z-30 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem]"></th>
+                                    <th className="bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem]"></th>
                                     {/* Заголовки колонок */}
                                     {columns.map(col => (
                                         <th
                                             key={col}
-                                            className="sticky top-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] text-[10px] sm:text-xs font-bold text-center align-middle"
+                                            className="bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] max-w-[2rem] sm:max-w-[2.5rem] md:max-w-[3rem] text-[10px] sm:text-xs font-bold text-center align-middle"
                                         >
                                             {col}
                                         </th>
@@ -342,7 +342,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                                     <tr key={rowIndex}>
                                         {/* Заголовок строки (номер) */}
                                         <th
-                                            className="sticky left-0 z-20 bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs font-bold text-center align-middle"
+                                            className="bg-gray-50 border border-gray-200 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[10px] sm:text-xs font-bold text-center align-middle"
                                         >
                                             {rowIndex + 1}
                                         </th>
