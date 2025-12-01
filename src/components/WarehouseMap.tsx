@@ -197,6 +197,37 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
         setIsDragging(false);
     };
 
+    // --- Pinch-to-Zoom Handlers ---
+    const [touchStartDist, setTouchStartDist] = useState<number | null>(null);
+    const [startZoom, setStartZoom] = useState<number>(1);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            setTouchStartDist(dist);
+            setStartZoom(zoomLevel);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2 && touchStartDist !== null) {
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const scale = dist / touchStartDist;
+            const newZoom = Math.min(Math.max(startZoom * scale, 0.5), 3);
+            setZoomLevel(newZoom);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setTouchStartDist(null);
+    };
+
     const getTitle = (slot: SlotData) => {
         const lines = [];
         if (slot.floor1Busy && slot.floor1Data) {
@@ -317,6 +348,9 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                         style={{
                             zoom: zoomLevel
                         }}
