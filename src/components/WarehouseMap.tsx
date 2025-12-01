@@ -14,6 +14,7 @@ interface SlotData {
 interface WarehouseMapProps {
     onSlotClick: (slotId: string) => void;
     selectedSlot?: string | null;
+    refreshTrigger?: number;
 }
 
 // Иконка рулона (Lucide Cylinder без заливки) - адаптивный размер
@@ -33,7 +34,7 @@ const RollIcon = ({ className = "" }: { className?: string }) => (
     </svg>
 );
 
-export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMapProps) {
+export default function WarehouseMap({ onSlotClick, selectedSlot, refreshTrigger = 0 }: WarehouseMapProps) {
     const [map, setMap] = useState<SlotData[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,7 @@ export default function WarehouseMap({ onSlotClick, selectedSlot }: WarehouseMap
 
     useEffect(() => {
         loadMap();
-    }, []);
+    }, [refreshTrigger]);
 
     const loadMap = async () => {
         try {

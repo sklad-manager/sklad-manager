@@ -93,7 +93,7 @@ export default function Home() {
 
           {/* Карта склада - на мобильных снизу */}
           <div className="order-2 lg:order-1 lg:col-span-2">
-            <WarehouseMap key={mapKey} onSlotClick={handleSlotClick} selectedSlot={selectedSlot} />
+            <WarehouseMap refreshTrigger={mapKey} onSlotClick={handleSlotClick} selectedSlot={selectedSlot} />
           </div>
         </div>
       </div>
