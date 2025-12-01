@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma db push && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
+    "bot": "npx tsx src/bot.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -14,7 +15,8 @@
     "next": "16.0.4",
     "prisma": "^5.22.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "telegraf": "^4.16.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
