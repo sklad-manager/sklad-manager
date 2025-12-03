@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Sklad Manager - Управление складом",
   description: "Система управления складом флизелина с визуализацией и drag-and-drop",
+  manifest: "/manifest.json",
+  themeColor: "#3b82f6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Склад Manager",
+  },
   viewport: {
     width: 'device-width',
     initialScale: 1,
@@ -43,6 +50,9 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* PWA Icons */}
+        <link rel="icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icon-512.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
