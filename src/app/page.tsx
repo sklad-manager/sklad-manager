@@ -15,17 +15,20 @@ export default function Home() {
   const [showReport, setShowReport] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [forceDesktop, setForceDesktop] = useState(false);
 
   // Определение мобильного устройства
   useEffect(() => {
     const checkMobile = () => {
+      // Если принудительно включен десктоп - не переключаем на мобильный вид
+      if (forceDesktop) return;
       setIsMobile(window.innerWidth < 768);
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [forceDesktop]);
 
   const handleSlotClick = (slotId: string) => {
     setSelectedSlot(slotId);
@@ -35,12 +38,15 @@ export default function Home() {
     setMapKey(prev => prev + 1); // Перезагружаем карту
   };
 
-  // Если мобильный режим
-  if (isMobile) {
+  // Если мобильный режим и не включен принудительный десктоп
+  if (isMobile && !forceDesktop) {
     return (
       <>
         <MobileDashboard
-          onSwitchToMap={() => setIsMobile(false)}
+          onSwitchToMap={() => {
+            setForceDesktop(true);
+            setIsMobile(false);
+          }}
           onOpenHistory={() => setShowHistory(true)}
         />
         {showHistory && (
@@ -64,7 +70,10 @@ export default function Home() {
           </div>
           <div className="flex gap-2 items-center">
             <button
-              onClick={() => setIsMobile(true)}
+              onClick={() => {
+                setForceDesktop(false);
+                setIsMobile(true);
+              }}
               className="md:hidden px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
             >
               📱 App
