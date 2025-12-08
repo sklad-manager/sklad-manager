@@ -33,7 +33,7 @@ export async function GET() {
     } catch (error) {
         console.error('Ошибка получения карты:', error);
         return NextResponse.json(
-            { error: `Ошибка получения карты склада: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка получения карты склада' },
             { status: 500 }
         );
     }

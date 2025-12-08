@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Ошибка поиска:', error);
         return NextResponse.json(
-            { error: `Ошибка поиска продукции: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка поиска продукции' },
             { status: 500 }
         );
     }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Ошибка сохранения:', error);
         return NextResponse.json(
-            { error: `Ошибка сохранения продукции: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка сохранения продукции' },
             { status: 500 }
         );
     }
@@ -166,7 +166,7 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         console.error('Ошибка удаления:', error);
         return NextResponse.json(
-            { error: `Ошибка удаления продукции: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка удаления продукции' },
             { status: 500 }
         );
     }
@@ -233,7 +233,7 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         console.error('Ошибка перемещения:', error);
         return NextResponse.json(
-            { error: `Ошибка перемещения продукции: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка перемещения продукции' },
             { status: 500 }
         );
     }

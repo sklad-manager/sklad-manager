@@ -79,7 +79,7 @@ export async function POST() {
     } catch (error) {
         console.error('Ошибка инициализации:', error);
         return NextResponse.json(
-            { error: `Ошибка инициализации склада: ${error instanceof Error ? error.message : String(error)}` },
+            { error: 'Ошибка инициализации склада' },
             { status: 500 }
         );
     }
