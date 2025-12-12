@@ -90,6 +90,15 @@ export default function Home() {
             >
               📜 История
             </button>
+            <button
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              🚪 Выход
+            </button>
           </div>
         </header>
 
